@@ -1,0 +1,15 @@
+.teammate {
+	border: 1px solid black;
+	border-radius: 3px;
+	margin: 3px;
+	background-color: #ffffe6;
+}
+
+.teammate.selected {
+	border-width: 2px;
+	background-color: #ffffb3;
+}
+
+.activated {
+	background-color: #ffff80;
+}

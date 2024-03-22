@@ -1,0 +1,51 @@
+{{ block "index" . }}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Daily Automation</title>
+		<meta chatset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="main.css" rel="stylesheet">
+		<link rel="icon" type="image/png" href="favicon.png">
+		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
+	</head>
+	<body>
+	<div class="teammates">
+	{{ range .Teammates }}
+			<div class="teammate{{ if eq .Name $.SelectedName }} selected{{ end }}{{ if and (eq "teammate" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}" id="teammate-{{ .DashedId }}" style="/*display: flex*/"
+			 hx-swap="outerHTML" hx-target="body">
+			<div class="name{{ if and (eq "name" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
+				hx-get="/?selectedName={{ .Name }}&activatedBy=name" hx-swap="innerHTML" hx-target="body"
+				>{{ .Name }}</div>
+			<div class="done{{ if and (eq "done" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
+				hx-get="/?selectedName={{ .Name }}&activatedBy=done" hx-swap="innerHTML" hx-target="body"
+				>{{ .Done }}</div>
+			<div class="willDo{{ if and (eq "willDo" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
+				hx-get="/?selectedName={{ .Name }}&activatedBy=willDo" hx-swap="innerHTML" hx-target="body"
+				>{{ .WillDo }}</div>
+			<div class="blockers{{ if and (eq "blockers" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
+				hx-get="/?selectedName={{ .Name }}&activatedBy=blockers" hx-swap="innerHTML" hx-target="body"
+				>{{ .Blockers }}</div>
+			<div class="generalRemarks{{ if and (eq "generalRemarks" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
+				hx-get="/?selectedName={{ .Name }}&activatedBy=generalRemarks" hx-swap="innerHTML" hx-target="body"
+				>{{ .GeneralRemarks }}</div>
+		</div>
+	{{ end }}
+	</div>
+	<hr />
+<script>
+document.addEventListener("DOMContentLoaded", (event) => {
+	document.body.addEventListener('htmx:beforeSwap', function(evt) {
+		// console.log("event cought");
+		if (evt.detail.xhr.status === 422) {
+			// console.log("tis 422");
+			evt.detail.shouldSwap = true;
+			evt.detail.isError = false;
+		}
+	});
+})
+</script>
+	</body>
+</html>
+{{ end }}
+
