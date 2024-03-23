@@ -12,8 +12,11 @@
 	<body>
 	<div class="teammates">
 	{{ range .Teammates }}
-			<div class="teammate{{ if eq .Name $.SelectedName }} selected{{ end }}{{ if and (eq "teammate" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}" id="teammate-{{ .DashedId }}" style="/*display: flex*/"
-			 hx-swap="outerHTML" hx-target="body">
+			<div id="teammate-{{ .DashedId }}"
+				class="teammate{{ if eq .Name $.SelectedName }} selected{{ end }}
+					{{ if and (eq "teammate" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
+				style="/*display: flex*/"
+				hx-get="/?selectedName={{ .Name }}&activatedBy=teammate" hx-swap="outerHTML" hx-target="body" hx-sync="this:abort">
 			<div class="name{{ if and (eq "name" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
 				hx-get="/?selectedName={{ .Name }}&activatedBy=name" hx-swap="innerHTML" hx-target="body"
 				>{{ .Name }}</div>
