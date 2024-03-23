@@ -10,9 +10,11 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/robfig/cron/v3"
 )
 
 type Templates struct {
@@ -75,10 +77,10 @@ func newDefaultTeammates() []Teammate {
 
 func newTeammate(name string) Teammate {
 	return Teammate{
-		Name: name,
-		Done: "",
-		WillDo: "",
-		Blockers: "",
+		Name:           name,
+		Done:           "",
+		WillDo:         "",
+		Blockers:       "",
 		GeneralRemarks: "",
 	}
 }
@@ -156,22 +158,23 @@ func initConfig() Config {
 
 const TeammatesFilename = "daily.json"
 
-func writeTeammates(teammates []Teammate) {
+func writeTeammates(path string, teammates []Teammate) error {
 	content, err := json.MarshalIndent(teammates, "", "\t")
 	if err != nil {
-		fmt.Println("CANNOT MARSHAL daily.json!")
-		fmt.Println(err)
+		fmt.Println("CANNOT MARSHAL TEAMMATES JSON!")
+		return err
 	} else {
-		err = os.WriteFile(TeammatesFilename, content, 0644)
+		err = os.WriteFile(path, content, 0644)
 		if err != nil {
-			fmt.Println("CANNOT WRITE daily.json!")
-			fmt.Println(err)
+			fmt.Printf("CANNOT WRITE '%s'!\n", path)
+			return err
 		}
 	}
+	return nil
 }
 
-func readTeammates() ([]Teammate, error) {
-	content, err := os.ReadFile(TeammatesFilename)
+func readTeammates(path string) ([]Teammate, error) {
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return []Teammate{}, err
 	}
@@ -183,19 +186,62 @@ func readTeammates() ([]Teammate, error) {
 	return teammates, nil
 }
 
+func resetDailyEntries() {
+	time := time.Now()
+	ts := time.Format("20060102150405")
+	resetFilename := fmt.Sprintf("daily.%s.json", ts)
+	err := os.Mkdir("oldDailies", os.ModeDir)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	resetFilepath := fmt.Sprintf("oldDailies/%s", resetFilename)
+	teammates, err := readTeammates(TeammatesFilename)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = writeTeammates(resetFilepath, teammates)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	resetTeammates := []Teammate{}
+	for _, teammate := range teammates {
+		resetTeammates = append(resetTeammates, newTeammate(teammate.Name))
+	}
+	err = writeTeammates(TeammatesFilename, resetTeammates)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 func main() {
 	fmt.Println("Daily Automation. Welcome and have a nice productive day.")
 	config := initConfig()
-	teammatesInit, err := readTeammates()
+	teammatesInit, err := readTeammates(TeammatesFilename)
 	page := newPage()
 	if err == nil {
 		page.Teammates = teammatesInit
 	} else {
 		page.Teammates = newNamedTeammates(config.Names)
 	}
-	fmt.Println(config.Names)
-	fmt.Println(teammatesInit)
+	// What teammates are used
 	fmt.Println(page.Teammates)
+	// Set up cron
+	c := cron.New()
+	/*
+	_, err = c.AddFunc("* * * * *", resetDailyEntries)
+	if err != nil {
+		fmt.Println(err)
+	}
+	*/
+	_, err = c.AddFunc("@daily", resetDailyEntries)
+	if err != nil {
+		fmt.Println(err)
+	}
+	c.Start()
+	// Set up server
 	server := echo.New()
 	server.Use(middleware.Logger())
 	server.File("/main.css", "css/main.css")
@@ -206,7 +252,7 @@ func main() {
 		activatedBy := c.QueryParam("activatedBy")
 		page.SelectedName = selectedName
 		page.ActivatedBy = activatedBy
-		teammatesFromFile, err := readTeammates()
+		teammatesFromFile, err := readTeammates(TeammatesFilename)
 		if err != nil {
 			fmt.Println("Could not read teammates from daily.json. Using default teammates.")
 			fmt.Println(err)
@@ -234,11 +280,12 @@ func main() {
 			}
 			// Write down changes to harddrive
 			cloneTeammates := page.Teammates
-			writeTeammates(cloneTeammates)
+			writeTeammates(TeammatesFilename, cloneTeammates)
 		}
 		return c.Render(200, "index", page)
 	})
 	err = server.Start(fmt.Sprintf(":%d", config.Port))
 	server.Logger.Fatal(err)
+	c.Stop()
 	fmt.Println("Daily Automation. Bye and have a nice productive day.")
 }
