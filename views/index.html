@@ -10,28 +10,100 @@
 		<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
 	</head>
 	<body>
-	<div class="teammates">
+		<div class="teammates" hx-include="* .selected *" hx-vals='js:{numberSelected:document.getElementsByClassName("selected").length }'>
 	{{ range .Teammates }}
-			<div id="teammate-{{ .DashedId }}"
-				class="teammate{{ if eq .Name $.SelectedName }} selected{{ end }}
-					{{ if and (eq "teammate" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
-				style="/*display: flex*/"
-				hx-get="/?selectedName={{ .Name }}&activatedBy=teammate" hx-swap="outerHTML" hx-target="body" hx-sync="this:abort">
-			<div class="name{{ if and (eq "name" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
-				hx-get="/?selectedName={{ .Name }}&activatedBy=name" hx-swap="innerHTML" hx-target="body"
-				>{{ .Name }}</div>
-			<div class="done{{ if and (eq "done" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
-				hx-get="/?selectedName={{ .Name }}&activatedBy=done" hx-swap="innerHTML" hx-target="body"
-				>{{ .Done }}</div>
-			<div class="willDo{{ if and (eq "willDo" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
-				hx-get="/?selectedName={{ .Name }}&activatedBy=willDo" hx-swap="innerHTML" hx-target="body"
-				>{{ .WillDo }}</div>
-			<div class="blockers{{ if and (eq "blockers" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
-				hx-get="/?selectedName={{ .Name }}&activatedBy=blockers" hx-swap="innerHTML" hx-target="body"
-				>{{ .Blockers }}</div>
-			<div class="generalRemarks{{ if and (eq "generalRemarks" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
-				hx-get="/?selectedName={{ .Name }}&activatedBy=generalRemarks" hx-swap="innerHTML" hx-target="body"
-				>{{ .GeneralRemarks }}</div>
+		<div
+			id="teammate-{{ .DashedId }}"
+			class="teammate{{ if eq .Name $.SelectedName }} selected{{ end }}
+				{{ if and (eq "teammate" $.ActivatedBy) (eq .Name $.SelectedName) }} activated{{ end }}"
+			>
+		{{ if eq .Name $.SelectedName }}
+				<form
+					id="selectedTeammate"
+					hx-target="body"
+					hx-get="/"
+					>
+					<div>
+						<label for="name">Name: </label>
+						<input
+							name="name"
+							type="text"
+							value="{{ .Name }}"
+							{{ if eq "name" $.ActivatedBy }}autofocus{{ end }}
+							readonly
+						/>
+					</div>
+					<div>
+						<label for="done">The day before: </label>
+						<input
+							name="done"
+							type="text"
+							value="{{ .Done }}"
+							placeholder="Content and team-related information that could be interesting for others."
+							{{ if eq "done" $.ActivatedBy }}autofocus{{ end }}
+						/>
+					</div>
+					<div>
+						<label for="willDo">Today: </label>
+						<input
+							name="willDo"
+							type="text"
+							value="{{ .WillDo }}"
+							placeholder="Ticket/Content related."
+							{{ if eq "willDo" $.ActivatedBy }}autofocus{{ end }}
+						/>
+					</div>
+					<div>
+						<label for="blockers">Blockers: </label>
+						<input
+							name="blockers"
+							type="text"
+							value="{{ .Blockers }}"
+							placeholder="Does anything disturbs your current work?"
+							{{ if eq "blockers" $.ActivatedBy }}autofocus{{ end }}
+						/>
+					</div>
+					<div>
+						<label for="generalRemarks">In general: </label>
+						<input
+							name="generalRemarks"
+							type="text"
+							value="{{ .GeneralRemarks }}"
+							placeholder="Any PTO planned? Any absences? Are you not feeling well?"
+							{{ if eq "generalRemarks" $.ActivatedBy }}autofocus{{ end }}
+						/>
+					</div>
+					<!--<button type="submit">Save & Reload</button>-->
+				</form>
+		{{ else }}
+				<div
+					class="name"
+					hx-get="/?selectedName={{ .Name }}&activatedBy=name"
+					hx-swap="innerHTML"
+					hx-target="body"
+					><span>Name: </span>{{ .Name }}</div>
+				<div
+					class="done"
+					hx-get="/?selectedName={{ .Name }}&activatedBy=done"
+					hx-swap="innerHTML"
+					hx-target="body"
+					><span>The day before: </span>{{ .Done }}</div>
+				<div class="willDo"
+					hx-get="/?selectedName={{ .Name }}&activatedBy=willDo"
+					hx-swap="innerHTML"
+					hx-target="body"
+					><span>Today: </span>{{ .WillDo }}</div>
+				<div class="blockers"
+					hx-get="/?selectedName={{ .Name }}&activatedBy=blockers"
+					hx-swap="innerHTML"
+					hx-target="body"
+					><span>Blockers: </span>{{ .Blockers }}</div>
+				<div class="generalRemarks"
+					hx-get="/?selectedName={{ .Name }}&activatedBy=generalRemarks"
+					hx-swap="innerHTML"
+					hx-target="body"
+					><span>In general: </span>{{ .GeneralRemarks }}</div>
+		{{ end }}
 		</div>
 	{{ end }}
 	</div>

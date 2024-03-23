@@ -13,3 +13,10 @@
 .activated {
 	background-color: #ffff80;
 }
+
+input[readonly] {
+  background-color:transparent;
+	font: initial;
+  border: 0;
+	padding-left: 0;
+}
