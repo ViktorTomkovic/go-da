@@ -93,10 +93,25 @@ func newNamedTeammates(names []string) []Teammate {
 	return result
 }
 
+type Focus struct {
+	FocusedElement string
+	SelectionStart int
+	SelectionStop  int
+}
+
+func emptyFocus() Focus {
+	return Focus{
+		FocusedElement: "",
+		SelectionStart: -1,
+		SelectionStop:  -1,
+	}
+}
+
 type Page struct {
 	Teammates    []Teammate
 	SelectedName string
 	ActivatedBy  string
+	Focus        Focus
 }
 
 func newPage() Page {
@@ -104,6 +119,7 @@ func newPage() Page {
 		Teammates:    newDefaultTeammates(),
 		SelectedName: "",
 		ActivatedBy:  "",
+		Focus:        emptyFocus(),
 	}
 }
 
@@ -216,6 +232,19 @@ func resetDailyEntries() {
 	}
 }
 
+func CreateFocusFromParams(selName string, selStart string, selStop string) Focus {
+	if selName == "" {
+		return emptyFocus()
+	}
+	selStartInt, _ := strconv.Atoi(selStart)
+	selStopInt, _ := strconv.Atoi(selStop)
+	return Focus{
+		FocusedElement: selName,
+		SelectionStart: selStartInt,
+		SelectionStop:  selStopInt,
+	}
+}
+
 func main() {
 	fmt.Println("Daily Automation. Welcome and have a nice productive day.")
 	config := initConfig()
@@ -230,12 +259,8 @@ func main() {
 	fmt.Println(page.Teammates)
 	// Set up cron
 	c := cron.New()
-	/*
-	_, err = c.AddFunc("* * * * *", resetDailyEntries)
-	if err != nil {
-		fmt.Println(err)
-	}
-	*/
+	/* _, err = c.AddFunc("* * * * *", resetDailyEntries)
+	if err != nil { fmt.Println(err) } */
 	_, err = c.AddFunc("@daily", resetDailyEntries)
 	if err != nil {
 		fmt.Println(err)
@@ -248,10 +273,14 @@ func main() {
 	server.File("/favicon.png", "favicon.png")
 	server.Renderer = newTemplate()
 	server.GET("/", func(c echo.Context) error {
+		// Get params which activated this request
 		selectedName := c.QueryParam("selectedName")
 		activatedBy := c.QueryParam("activatedBy")
 		page.SelectedName = selectedName
 		page.ActivatedBy = activatedBy
+		// Get focused input element, so we can restore cursor state in input text
+		page.Focus = CreateFocusFromParams(c.QueryParam("selName"), c.QueryParam("selStart"), c.QueryParam("selStop"))
+		// Update teammates
 		teammatesFromFile, err := readTeammates(TeammatesFilename)
 		if err != nil {
 			fmt.Println("Could not read teammates from daily.json. Using default teammates.")
@@ -277,10 +306,15 @@ func main() {
 				} else {
 					page.Teammates = append(page.Teammates, modifiedTeammate)
 				}
+			} else {
+				fmt.Println(err)
 			}
 			// Write down changes to harddrive
 			cloneTeammates := page.Teammates
-			writeTeammates(TeammatesFilename, cloneTeammates)
+			err = writeTeammates(TeammatesFilename, cloneTeammates)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		return c.Render(200, "index", page)
 	})

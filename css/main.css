@@ -20,3 +20,29 @@ input[readonly] {
   border: 0;
 	padding-left: 0;
 }
+
+form div {
+	display: flex;
+	flex-direction: row;
+}
+
+.defaultResponse {
+	color: #999;
+}
+
+*:has(> span.response), *:has(> span.defaultResponse), *:has(> input) {
+	display:flex;
+	flex-direction:row;
+}
+
+*:has(+ span.response), *:has(+ span.defaultResponse), *:has(+ input) {
+	margin-right: 0.5em;
+	margin-left: 0.5em;
+}
+
+span.response, span.defaultResponse, input {
+	flex: 1;
+	margin-right: 0.5em;
+	margin-left: 0.5em;
+}
+

@@ -39,8 +39,13 @@
 							name="done"
 							type="text"
 							value="{{ .Done }}"
-							placeholder="Content and team-related information that could be interesting for others."
+							placeholder="{{ template "DefaultDoneText" }}"
 							{{ if eq "done" $.ActivatedBy }}autofocus{{ end }}
+							hx-get="/?selectedName={{ .Name }}&activatedBy=done"
+							hx-target="body"
+							hx-trigger="keyup changed delay:3s"
+							hx-sync="this:queue last"
+							{{ template "HxValsFocusedStats" }}
 						/>
 					</div>
 					<div>
@@ -49,8 +54,13 @@
 							name="willDo"
 							type="text"
 							value="{{ .WillDo }}"
-							placeholder="Ticket/Content related."
+							placeholder="{{ template "DefaultWillDoText" }}"
 							{{ if eq "willDo" $.ActivatedBy }}autofocus{{ end }}
+							hx-get="/?selectedName={{ .Name }}&activatedBy=willDo"
+							hx-target="body"
+							hx-trigger="keyup changed delay:3s"
+							hx-sync="this:queue last"
+							{{ template "HxValsFocusedStats" }}
 						/>
 					</div>
 					<div>
@@ -59,8 +69,13 @@
 							name="blockers"
 							type="text"
 							value="{{ .Blockers }}"
-							placeholder="Does anything disturbs your current work?"
+							placeholder="{{ template "DefaultBlockersText" }}"
 							{{ if eq "blockers" $.ActivatedBy }}autofocus{{ end }}
+							hx-get="/?selectedName={{ .Name }}&activatedBy=blockers"
+							hx-target="body"
+							hx-trigger="keyup changed delay:3s"
+							hx-sync="this:queue last"
+							{{ template "HxValsFocusedStats" }}
 						/>
 					</div>
 					<div>
@@ -69,8 +84,13 @@
 							name="generalRemarks"
 							type="text"
 							value="{{ .GeneralRemarks }}"
-							placeholder="Any PTO planned? Any absences? Are you not feeling well?"
+							placeholder="{{ template "DefaultGeneralRemarksText" }}"
 							{{ if eq "generalRemarks" $.ActivatedBy }}autofocus{{ end }}
+							hx-get="/?selectedName={{ .Name }}&activatedBy=generalRemarks"
+							hx-target="body"
+							hx-trigger="keyup changed delay:3s"
+							hx-sync="this:queue last"
+							{{ template "HxValsFocusedStats" }}
 						/>
 					</div>
 					<!--<button type="submit">Save & Reload</button>-->
@@ -81,28 +101,40 @@
 					hx-get="/?selectedName={{ .Name }}&activatedBy=name"
 					hx-swap="innerHTML"
 					hx-target="body"
-					><span>Name: </span>{{ .Name }}</div>
+					><span class="question">Name: </span><span class="response">{{ .Name }}</span></div>
 				<div
 					class="done"
 					hx-get="/?selectedName={{ .Name }}&activatedBy=done"
 					hx-swap="innerHTML"
 					hx-target="body"
-					><span>The day before: </span>{{ .Done }}</div>
+					><span class="question">The day before: </span>
+					{{- if .Done -}}<span class="response">{{ .Done }}</span>
+					{{ else }}<span class="defaultResponse">{{ template "DefaultDoneText" }}</span>
+					{{ end }}</div>
 				<div class="willDo"
 					hx-get="/?selectedName={{ .Name }}&activatedBy=willDo"
 					hx-swap="innerHTML"
 					hx-target="body"
-					><span>Today: </span>{{ .WillDo }}</div>
+					><span class="question">Today: </span>
+					{{- if .WillDo -}}<span class="response">{{ .WillDo }}</span>
+					{{ else }}<span class="defaultResponse">{{ template "DefaultWillDoText" }}</span>
+					{{ end }}</div>
 				<div class="blockers"
 					hx-get="/?selectedName={{ .Name }}&activatedBy=blockers"
 					hx-swap="innerHTML"
 					hx-target="body"
-					><span>Blockers: </span>{{ .Blockers }}</div>
+					><span>Blockers: </span>
+					{{- if .Blockers -}}<span class="response">{{ .Blockers }}</span>
+					{{ else }}<span class="defaultResponse">{{ template "DefaultBlockersText" }}</span>
+					{{ end }}</div>
 				<div class="generalRemarks"
 					hx-get="/?selectedName={{ .Name }}&activatedBy=generalRemarks"
 					hx-swap="innerHTML"
 					hx-target="body"
-					><span>In general: </span>{{ .GeneralRemarks }}</div>
+					><span>In general: </span>
+					{{- if .GeneralRemarks -}}<span class="response">{{ .GeneralRemarks }}</span>
+					{{ else }}<span class="defaultResponse">{{ template "DefaultGeneralRemarksText" }}</span>
+					{{ end }}</div>
 		{{ end }}
 		</div>
 	{{ end }}
@@ -120,7 +152,25 @@ document.addEventListener("DOMContentLoaded", (event) => {
 	});
 })
 </script>
+		{{ template "FocusMore" .Focus }}
 	</body>
 </html>
 {{ end }}
 
+{{ define "DefaultDoneText" }}Content and team-related information that could be interesting for others.{{ end }}
+{{ define "DefaultWillDoText" }}Ticket/Content related.{{ end }}
+{{ define "DefaultBlockersText" }}Does anything disturbs your current work?{{ end }}
+{{ define "DefaultGeneralRemarksText" }}Any PTO planned? Any absences? Are you not feeling well?{{ end }}
+
+{{ define "HxValsFocusedStats" }}
+hx-vals='js:{selName:document.activeElement.hasAttribute("name")?document.activeElement.getAttribute("name"):"",selStart:document.activeElement.selectionStart,selStop:document.activeElement.selectionEnd}'
+{{ end }}
+
+{{ define "FocusMore" }}
+{{ if .FocusedElement }}
+<script>
+document.querySelector('input[name="{{ .FocusedElement }}"]').focus();
+document.querySelector('input[name="{{ .FocusedElement }}"]').setSelectionRange({{ .SelectionStart }}, {{ .SelectionStop }});
+</script>
+{{ end }}
+{{ end }}
